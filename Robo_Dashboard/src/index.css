@@ -1,0 +1,784 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Arial, sans-serif;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(62, 122, 205, 0.28), transparent 28%),
+    radial-gradient(circle at 88% 95%, rgba(45, 115, 220, 0.28), transparent 30%),
+    radial-gradient(circle at 50% 90%, rgba(11, 18, 28, 0.96), rgba(4, 8, 14, 1) 72%),
+    #060a10;
+  color: #f8fafc;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.45;
+  z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(78, 151, 255, 0.24), transparent 30%),
+    radial-gradient(circle at 100% 100%, rgba(57, 132, 255, 0.32), transparent 34%),
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 35%,
+      rgba(255, 255, 255, 0.13) 48%,
+      rgba(255, 255, 255, 0.04) 60%,
+      transparent 100%
+    );
+  opacity: 0.9;
+  z-index: 0;
+}
+
+canvas {
+  outline: none;
+  cursor: grab;
+}
+
+canvas:active {
+  cursor: grabbing;
+}
+
+main,
+.clean-grid {
+  background: transparent !important;
+}
+
+.clean-grid {
+  position: relative;
+  background-image: none !important;
+}
+
+.clean-grid > div:first-child {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.1), transparent 34%),
+    radial-gradient(circle at 84% 92%, rgba(60, 132, 255, 0.22), transparent 36%),
+    radial-gradient(circle at 8% 8%, rgba(65, 133, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 50% 80%, rgba(0, 0, 0, 0.62), transparent 62%) !important;
+}
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.075)
+    ) !important;
+  backdrop-filter: blur(28px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(145%) !important;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: -55%;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 72%
+  );
+  transform: translateX(-35%) translateY(-20%) rotate(4deg);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+.panel::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -38%;
+  height: 55%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(72, 151, 255, 0.34),
+    rgba(72, 151, 255, 0.12) 38%,
+    transparent 72%
+  );
+  filter: blur(18px);
+  opacity: 0.62;
+  z-index: 0;
+}
+
+.panel > * {
+  position: relative;
+  z-index: 2;
+}
+
+[class*="bg-white"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+}
+
+/* Reflection only for normal cards, not LiDAR panel */
+.rounded-2xl[class*="border"],
+.rounded-\[24px\]:not(.lidar-scene),
+.rounded-\[26px\] {
+  position: relative;
+  overflow: hidden;
+}
+
+.rounded-2xl[class*="border"]::before,
+.rounded-\[24px\]:not(.lidar-scene)::before,
+.rounded-\[26px\]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14),
+      transparent 32%,
+      transparent 65%,
+      rgba(255, 255, 255, 0.04)
+    );
+  opacity: 0.35;
+  z-index: 0;
+}
+
+.rounded-2xl[class*="border"] > *,
+.rounded-\[24px\]:not(.lidar-scene) > *,
+.rounded-\[26px\] > * {
+  position: relative;
+  z-index: 2;
+}
+
+button[class*="rounded-full"],
+.grid[class*="rounded-full"] {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.08)
+    ) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(22px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+button[class*="bg-zinc-950"],
+.bg-zinc-950 {
+  background: rgba(8, 12, 18, 0.88) !important;
+  color: #ffffff !important;
+}
+
+.bg-red-400,
+.bg-red-500 {
+  background: #ff3f64 !important;
+  color: #ffffff !important;
+}
+
+.text-zinc-950,
+.text-zinc-900,
+.text-zinc-800,
+.text-zinc-700 {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.text-zinc-600,
+.text-zinc-500 {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.text-zinc-400 {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+.border-white\/70,
+.border-white\/75,
+.border-white\/80,
+.border-zinc-200\/70 {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.rounded-2xl[class*="border"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 38px rgba(0, 0, 0, 0.16) !important;
+}
+
+header .rounded-full {
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.bg-black,
+.bg-zinc-950 {
+  background-color: rgba(3, 6, 10, 0.92) !important;
+}
+
+.bg-\[\#101416\] {
+  background: #061014 !important;
+}
+
+/* FINAL LiDAR orientation + animation fix */
+.lidar-scene {
+  position: relative !important;
+  overflow: hidden !important;
+  background: #061014 !important;
+}
+
+.lidar-background {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(15, 80, 68, 0.72),
+    rgba(6, 16, 20, 1) 70%
+  ) !important;
+}
+
+.lidar-glow {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.28), transparent 34%),
+    radial-gradient(circle at 75% 90%, rgba(59, 130, 246, 0.34), transparent 42%) !important;
+}
+
+.lidar-ring {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(52, 211, 153, 0.24) !important;
+  z-index: 10 !important;
+  pointer-events: none;
+}
+
+.lidar-ring-1 {
+  width: 62%;
+  height: 82%;
+}
+
+.lidar-ring-2 {
+  width: 47%;
+  height: 62%;
+}
+
+.lidar-ring-3 {
+  width: 32%;
+  height: 42%;
+}
+
+.lidar-ring-4 {
+  width: 17%;
+  height: 22%;
+}
+
+.lidar-sweep {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 38% !important;
+  height: 2px !important;
+  transform-origin: left center !important;
+  background: linear-gradient(
+    90deg,
+    rgba(52, 211, 153, 1),
+    rgba(52, 211, 153, 0)
+  ) !important;
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.95) !important;
+  z-index: 20 !important;
+  pointer-events: none;
+  animation: radarSweep 2.4s linear infinite !important;
+}
+
+.lidar-center-dot {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 999px !important;
+  background: rgba(52, 211, 153, 1) !important;
+  box-shadow: 0 0 30px rgba(110, 231, 183, 1) !important;
+  z-index: 25 !important;
+  pointer-events: none;
+}
+
+.lidar-point {
+  position: absolute !important;
+  display: block !important;
+  border-radius: 999px !important;
+  background: rgba(52, 211, 153, 1) !important;
+  box-shadow: 0 0 14px rgba(110, 231, 183, 0.95) !important;
+  z-index: 18 !important;
+  pointer-events: none;
+}
+
+.lidar-paths {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 16 !important;
+  pointer-events: none;
+  overflow: visible !important;
+}
+
+.lidar-metrics {
+  position: absolute !important;
+  left: 1rem !important;
+  bottom: 1rem !important;
+  z-index: 30 !important;
+}
+
+img {
+  position: relative;
+  z-index: 1;
+}
+
+svg {
+  overflow: visible;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+@keyframes radarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes moveTrack {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -80;
+  }
+}
+/* ===============================
+   FINAL LOADING SCREEN FIX
+   =============================== */
+
+.loading-screen {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 700ms ease,
+    transform 700ms ease,
+    filter 700ms ease;
+}
+
+.loading-screen-exit {
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.app-content {
+  min-height: 100vh;
+  transition:
+    opacity 700ms ease,
+    transform 700ms ease,
+    filter 700ms ease;
+}
+
+.app-content-hidden {
+  opacity: 0;
+  transform: scale(0.985);
+  filter: blur(8px);
+}
+
+.app-content-visible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+.loading-fade-in {
+  animation: loaderFadeIn 1.2s ease-out both;
+}
+
+.loading-orb-wrap {
+  overflow: visible !important;
+  animation: orbEnter 1.45s cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+.loading-orb-wrap canvas {
+  overflow: visible !important;
+}
+
+@keyframes loaderFadeIn {
+  0% {
+    opacity: 0;
+    filter: blur(18px);
+    transform: scale(1.035);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+@keyframes orbEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.86) translateY(28px);
+    filter: blur(18px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.025) translateY(0);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Full cinematic dark background */
+.loader-bg-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(80, 120, 255, 0.1), transparent 32%),
+    linear-gradient(135deg, #02040a 0%, #070b15 38%, #03040a 100%);
+}
+
+/* Aurora layers */
+.loader-aurora-layer {
+  position: absolute;
+  pointer-events: none;
+  filter: blur(60px);
+  mix-blend-mode: screen;
+}
+
+.aurora-one {
+  left: -12%;
+  top: -18%;
+  width: 58vw;
+  height: 52vh;
+  background:
+    radial-gradient(ellipse at center, rgba(210, 220, 255, 0.72), transparent 55%),
+    radial-gradient(ellipse at center, rgba(80, 110, 255, 0.44), transparent 72%);
+  opacity: 0.68;
+  animation: auroraOneMove 8s ease-in-out infinite alternate;
+}
+
+.aurora-two {
+  right: -20%;
+  bottom: -20%;
+  width: 72vw;
+  height: 64vh;
+  background:
+    radial-gradient(ellipse at center, rgba(100, 55, 230, 0.92), transparent 52%),
+    radial-gradient(ellipse at center, rgba(70, 95, 255, 0.46), transparent 76%);
+  opacity: 0.84;
+  animation: auroraTwoMove 9s ease-in-out infinite alternate;
+}
+
+.aurora-three {
+  left: 23%;
+  top: 16%;
+  width: 56vw;
+  height: 62vh;
+  background:
+    radial-gradient(ellipse at center, rgba(72, 108, 180, 0.32), transparent 58%),
+    radial-gradient(ellipse at center, rgba(50, 210, 255, 0.11), transparent 70%);
+  opacity: 0.55;
+  animation: auroraThreeMove 10s ease-in-out infinite alternate;
+}
+
+@keyframes auroraOneMove {
+  0% {
+    transform: translate3d(-3%, -2%, 0) rotate(-8deg) scale(1);
+  }
+
+  100% {
+    transform: translate3d(8%, 7%, 0) rotate(4deg) scale(1.12);
+  }
+}
+
+@keyframes auroraTwoMove {
+  0% {
+    transform: translate3d(4%, 5%, 0) rotate(6deg) scale(1);
+  }
+
+  100% {
+    transform: translate3d(-7%, -8%, 0) rotate(-5deg) scale(1.13);
+  }
+}
+
+@keyframes auroraThreeMove {
+  0% {
+    transform: translate3d(0, -5%, 0) rotate(2deg) scale(0.96);
+  }
+
+  100% {
+    transform: translate3d(-5%, 5%, 0) rotate(-4deg) scale(1.08);
+  }
+}
+
+/* Moving light leaks */
+.loader-light-sweep {
+  position: absolute;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: blur(34px);
+  opacity: 0.5;
+}
+
+.sweep-one {
+  left: -30%;
+  top: 8%;
+  width: 70vw;
+  height: 16vh;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(190, 205, 255, 0.42),
+    rgba(84, 120, 255, 0.22),
+    transparent
+  );
+  transform: rotate(-18deg);
+  animation: sweepOneMove 7s ease-in-out infinite;
+}
+
+.sweep-two {
+  right: -36%;
+  bottom: 18%;
+  width: 74vw;
+  height: 20vh;
+  background: linear-gradient(
+    105deg,
+    transparent,
+    rgba(138, 92, 246, 0.5),
+    rgba(79, 70, 229, 0.3),
+    transparent
+  );
+  transform: rotate(-20deg);
+  animation: sweepTwoMove 8.5s ease-in-out infinite;
+}
+
+.sweep-three {
+  left: 26%;
+  top: -12%;
+  width: 20vw;
+  height: 80vh;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(120, 150, 255, 0.1),
+    transparent
+  );
+  transform: rotate(10deg);
+  animation: sweepThreeMove 9.5s ease-in-out infinite alternate;
+}
+
+@keyframes sweepOneMove {
+  0% {
+    transform: translateX(-18%) rotate(-18deg);
+    opacity: 0.18;
+  }
+
+  42% {
+    opacity: 0.72;
+  }
+
+  100% {
+    transform: translateX(80%) rotate(-18deg);
+    opacity: 0.08;
+  }
+}
+
+@keyframes sweepTwoMove {
+  0% {
+    transform: translateX(18%) rotate(-20deg);
+    opacity: 0.18;
+  }
+
+  50% {
+    opacity: 0.72;
+  }
+
+  100% {
+    transform: translateX(-82%) rotate(-20deg);
+    opacity: 0.1;
+  }
+}
+
+@keyframes sweepThreeMove {
+  0% {
+    transform: translateY(-12%) rotate(10deg) scale(0.95);
+    opacity: 0.12;
+  }
+
+  100% {
+    transform: translateY(8%) rotate(15deg) scale(1.08);
+    opacity: 0.32;
+  }
+}
+
+/* Glow behind 3D object */
+.loader-orb-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54vw;
+  height: 54vw;
+  max-width: 780px;
+  max-height: 780px;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle, rgba(96, 165, 250, 0.22), transparent 42%),
+    radial-gradient(circle, rgba(139, 92, 246, 0.22), transparent 58%);
+  filter: blur(38px);
+  opacity: 0.8;
+  animation: orbGlowPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes orbGlowPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.55;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.92;
+  }
+}
+
+/* Star background */
+.loader-star-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.42;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(180, 200, 255, 0.8) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(125, 225, 255, 0.6) 0 1px, transparent 1.4px);
+  background-size:
+    210px 210px,
+    320px 320px,
+    470px 470px;
+  background-position:
+    22px 30px,
+    100px 150px,
+    240px 90px;
+  animation: starDrift 16s linear infinite;
+}
+
+@keyframes starDrift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(-90px, 52px, 0);
+  }
+}
+
+/* Dark cinematic edge */
+.loader-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.16) 42%, rgba(0, 0, 0, 0.78) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 28%, transparent 70%, rgba(0, 0, 0, 0.52));
+  pointer-events: none;
+}
+
+/* Remove white flash/white plate from Three.js canvas */
+.rover-canvas-wrap,
+.rover-canvas-wrap canvas {
+  background: transparent !important;
+}
+
+canvas {
+  background: transparent !important;
+}
