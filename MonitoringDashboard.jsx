@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   BatteryCharging,
@@ -12,7 +12,6 @@ import {
   Navigation,
   Radio,
   ScanLine,
-  Search,
   Settings,
   Thermometer,
   UserRound,
@@ -63,17 +62,7 @@ const roverStats = [
   },
 ];
 
-const telemetryPoints = [
-  { x: 0, cpu: 42, temp: 36, battery: 82 },
-  { x: 12, cpu: 48, temp: 38, battery: 80 },
-  { x: 24, cpu: 54, temp: 41, battery: 79 },
-  { x: 36, cpu: 51, temp: 42, battery: 78 },
-  { x: 48, cpu: 63, temp: 44, battery: 76 },
-  { x: 60, cpu: 66, temp: 46, battery: 75 },
-  { x: 72, cpu: 58, temp: 45, battery: 74 },
-  { x: 84, cpu: 61, temp: 46, battery: 73 },
-  { x: 100, cpu: 68, temp: 48, battery: 72 },
-];
+
 
 function StatusPill({ text, color = "bg-emerald-500" }) {
   return (
@@ -166,7 +155,7 @@ function useYoloStats() {
   return stats;
 }
 
-function AIFeedPanel() {
+function AIFeedPanel({ expanded }) {
   const stats = useYoloStats();
   const isRunning = stats.status === "running";
 
@@ -184,47 +173,49 @@ function AIFeedPanel() {
         }
       />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[24px] border border-zinc-200/70 bg-black">
-        <img
-          src={YOLO_STREAM_URL}
-          alt="SAMP ROBO YOLO AI Feed"
-          className="h-full w-full bg-black object-contain"
-        />
+      <div className={`flex min-h-0 flex-1 gap-4 ${expanded ? "flex-row" : "flex-col"}`}>
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[24px] border border-zinc-200/70 bg-black">
+          <img
+            src={YOLO_STREAM_URL}
+            alt="SAMP ROBO YOLO AI Feed"
+            className="h-full w-full bg-black object-contain"
+          />
 
-        {!isRunning && (
-          <div className="absolute inset-0 grid place-items-center bg-zinc-950 text-center text-white">
-            <div>
-              <Camera className="mx-auto mb-3 h-12 w-12 text-zinc-500" />
-              <p className="text-base font-black">YOLO Feed Not Connected</p>
-              <p className="mt-2 text-xs text-zinc-400">
-                Run{" "}
-                <span className="font-bold text-white">python3 main.py</span>{" "}
-                in Pose_Estimation
-              </p>
-              <p className="mt-1 text-[11px] text-zinc-500">
-                Expected stream: {YOLO_STREAM_URL}
-              </p>
+          {!isRunning && (
+            <div className="absolute inset-0 grid place-items-center bg-zinc-950 text-center text-white">
+              <div>
+                <Camera className="mx-auto mb-3 h-12 w-12 text-zinc-500" />
+                <p className="text-base font-black">YOLO Feed Not Connected</p>
+                <p className="mt-2 text-xs text-zinc-400">
+                  Run{" "}
+                  <span className="font-bold text-white">python3 main.py</span>{" "}
+                  in Pose_Estimation
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  Expected stream: {YOLO_STREAM_URL}
+                </p>
+              </div>
             </div>
+          )}
+
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-xs font-semibold text-white">
+            <Video className="h-4 w-4 text-emerald-300" />
+            CAM-01 / YOLOv8 Stream
           </div>
-        )}
 
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-xs font-semibold text-white">
-          <Video className="h-4 w-4 text-emerald-300" />
-          CAM-01 / YOLOv8 Stream
+          <div className="absolute right-4 top-4 rounded-full bg-red-500 px-4 py-1.5 text-[10px] font-black text-white shadow-lg">
+            LIVE
+          </div>
         </div>
 
-        <div className="absolute right-4 top-4 rounded-full bg-red-500 px-4 py-1.5 text-[10px] font-black text-white shadow-lg">
-          LIVE
+        <div className={`grid shrink-0 gap-3 ${expanded ? "w-[160px] grid-cols-1 grid-rows-3" : "grid-cols-3"}`}>
+          <MetricBox label="Persons" value={stats.person_count ?? 0} />
+          <MetricBox label="Objects" value={stats.object_count ?? 0} />
+          <MetricBox
+            label="FPS"
+            value={stats.fps ? Number(stats.fps).toFixed(1) : "0.0"}
+          />
         </div>
-      </div>
-
-      <div className="mt-4 grid shrink-0 grid-cols-3 gap-3">
-        <MetricBox label="Persons" value={stats.person_count ?? 0} />
-        <MetricBox label="Objects" value={stats.object_count ?? 0} />
-        <MetricBox
-          label="FPS"
-          value={stats.fps ? Number(stats.fps).toFixed(1) : "0.0"}
-        />
       </div>
     </section>
   );
@@ -339,161 +330,67 @@ function DarkMetric({ label, value }) {
 
 function RoverRealtimePanel() {
   return (
-    <section className="panel h-full min-h-0 overflow-hidden rounded-[30px] px-5 py-4">
-      <div className="mb-3 flex h-[38px] items-center justify-between">
+    <section className="panel flex h-full w-full flex-col overflow-hidden rounded-[30px] px-5 py-4 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="grid h-8 w-8 place-items-center rounded-full bg-zinc-950 text-white shadow-lg">
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-white shadow-lg">
             <Activity className="h-4 w-4" />
+            <span className="absolute -right-1 -top-1 flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+            </span>
           </div>
 
           <div>
-            <h2 className="text-[15px] font-black leading-none tracking-[-0.04em] text-zinc-950">
+            <h2 className="text-[16px] font-black leading-none tracking-[-0.04em] text-zinc-950">
               Rover Real-Time Info
             </h2>
-            <p className="mt-1 text-[10px] font-medium leading-none text-zinc-400">
+            <p className="mt-1 text-[11px] font-medium leading-none text-zinc-500">
               Telemetry, compute, power, motor and communication status
             </p>
           </div>
         </div>
 
-        <StatusPill text="LIVE" />
+        <StatusPill text="LIVE STREAM" />
       </div>
 
-      <div className="grid h-[calc(100%-50px)] min-h-0 grid-cols-[0.88fr_1.12fr] gap-4">
-        <div className="grid min-h-0 grid-cols-3 grid-rows-2 gap-3">
-          {roverStats.map((item) => {
-            const Icon = item.icon;
+      <div className="grid flex-1 grid-cols-6 gap-4">
+        {roverStats.map((item) => {
+          const Icon = item.icon;
 
-            return (
-              <div
-                key={item.label}
-                className="flex min-h-0 flex-col justify-between rounded-2xl border border-white/80 bg-white/65 px-3 py-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <Icon className="h-3.5 w-3.5 text-zinc-500" />
-                  <span className="rounded-full bg-zinc-950 px-2 py-0.5 text-[8px] font-black leading-4 text-white">
-                    {item.status}
-                  </span>
+          return (
+            <div
+              key={item.label}
+              className="group relative flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/60 bg-gradient-to-br from-white/90 to-white/50 p-3.5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+            >
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-black/5 transition-transform group-hover:scale-150" />
+              
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                  <Icon className="h-3.5 w-3.5 text-zinc-700" />
                 </div>
-
-                <div>
-                  <p className="text-[9px] font-black uppercase leading-none tracking-wide text-zinc-400">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 text-[20px] font-black leading-none tracking-[-0.05em] text-zinc-950">
-                    {item.value}
-                  </p>
-                </div>
+                <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white shadow-sm">
+                  {item.status}
+                </span>
               </div>
-            );
-          })}
-        </div>
 
-        <TelemetryGraph />
+              <div className="relative z-10 mt-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  {item.label}
+                </p>
+                <p className="mt-0.5 text-2xl font-black tracking-[-0.04em] text-zinc-900">
+                  {item.value}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function TelemetryGraph() {
-  const cpuPath = telemetryPoints
-    .map((point, index) => {
-      const x = point.x;
-      const y = 100 - point.cpu;
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
 
-  const tempPath = telemetryPoints
-    .map((point, index) => {
-      const x = point.x;
-      const y = 100 - point.temp;
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-
-  const batteryPath = telemetryPoints
-    .map((point, index) => {
-      const x = point.x;
-      const y = 100 - point.battery;
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-
-  return (
-    <div className="min-h-0 rounded-2xl border border-white/80 bg-white/65 p-3">
-      <div className="mb-2 flex h-[30px] items-start justify-between">
-        <div>
-          <h3 className="text-[13px] font-black leading-none text-zinc-950">
-            Telemetry Stream
-          </h3>
-          <p className="mt-1 text-[10px] leading-none text-zinc-400">
-            CPU / TEMP / BATTERY
-          </p>
-        </div>
-
-        <div className="flex gap-3 text-[9px] font-black leading-none text-zinc-500">
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-zinc-950" />
-            CPU
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-amber-400" />
-            TEMP
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            BAT
-          </span>
-        </div>
-      </div>
-
-      <div className="relative h-[calc(100%-38px)] min-h-[128px] overflow-hidden rounded-2xl bg-white/70">
-        <svg
-          className="h-full w-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="telemetryFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="rgba(0,0,0,0.16)" />
-              <stop offset="100%" stopColor="rgba(0,0,0,0.01)" />
-            </linearGradient>
-          </defs>
-
-          {[20, 40, 60, 80].map((line) => (
-            <line
-              key={`h-${line}`}
-              x1="0"
-              x2="100"
-              y1={line}
-              y2={line}
-              stroke="rgba(113,113,122,0.18)"
-              strokeDasharray="2 2"
-            />
-          ))}
-
-          {[20, 40, 60, 80].map((line) => (
-            <line
-              key={`v-${line}`}
-              y1="0"
-              y2="100"
-              x1={line}
-              x2={line}
-              stroke="rgba(113,113,122,0.14)"
-              strokeDasharray="2 2"
-            />
-          ))}
-
-          <path d={`${cpuPath} L 100 100 L 0 100 Z`} fill="url(#telemetryFill)" />
-          <path d={cpuPath} fill="none" stroke="#111827" strokeWidth="1.4" />
-          <path d={tempPath} fill="none" stroke="#f59e0b" strokeWidth="1.2" />
-          <path d={batteryPath} fill="none" stroke="#22c55e" strokeWidth="1.2" />
-        </svg>
-      </div>
-    </div>
-  );
-}
 
 function MissionNavigationPage() {
   return (
@@ -710,11 +607,32 @@ function AiAssistantPage() {
   );
 }
 
-function MonitoringContent() {
+function MonitoringContent({ expandedView }) {
+  if (expandedView === "ai") {
+    return (
+      <section className="relative z-10 flex h-[calc(100vh-104px)] flex-col px-20 pb-6">
+        <div className="min-h-0 w-full flex-1">
+          <AIFeedPanel expanded />
+        </div>
+      </section>
+    );
+  }
+
+  if (expandedView === "lidar") {
+    return (
+      <section className="relative z-10 grid h-[calc(100vh-104px)] grid-rows-[minmax(0,1fr)_145px] gap-5 px-20 pb-6">
+        <div className="min-h-0 w-full">
+          <LidarPanel />
+        </div>
+        <RoverRealtimePanel />
+      </section>
+    );
+  }
+
   return (
-    <section className="relative z-10 grid h-[calc(100vh-104px)] grid-rows-[minmax(0,1fr)_235px] gap-5 px-20 pb-6">
+    <section className="relative z-10 grid h-[calc(100vh-104px)] grid-rows-[minmax(0,1fr)_145px] gap-5 px-20 pb-6">
       <div className="grid min-h-0 grid-cols-2 gap-5">
-        <AIFeedPanel />
+        <AIFeedPanel expanded={false} />
         <LidarPanel />
       </div>
 
@@ -725,6 +643,7 @@ function MonitoringContent() {
 
 export default function MonitoringDashboard({ onHome }) {
   const [activePanel, setActivePanel] = useState("monitoring");
+  const [expandedView, setExpandedView] = useState("split");
 
   return (
     <main className="h-screen w-screen overflow-hidden bg-[#eef0ef] text-zinc-950">
@@ -742,9 +661,27 @@ export default function MonitoringDashboard({ onHome }) {
           <div className="flex items-center gap-3 rounded-full border border-white/75 bg-white/70 px-4 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
             <StatusPill text="ROVER ONLINE" />
             <div className="h-6 w-px bg-zinc-300/70" />
-            <div className="text-xs font-bold text-zinc-500">AI ACTIVE</div>
+            <button
+              onClick={() => setExpandedView((p) => (p === "ai" ? "split" : "ai"))}
+              className={`text-xs font-bold transition-colors ${
+                expandedView === "ai"
+                  ? "text-blue-500"
+                  : "text-zinc-500 hover:text-zinc-800"
+              }`}
+            >
+              AI FEED
+            </button>
             <div className="h-6 w-px bg-zinc-300/70" />
-            <div className="text-xs font-bold text-zinc-500">LiDAR 360°</div>
+            <button
+              onClick={() => setExpandedView((p) => (p === "lidar" ? "split" : "lidar"))}
+              className={`text-xs font-bold transition-colors ${
+                expandedView === "lidar"
+                  ? "text-blue-500"
+                  : "text-zinc-500 hover:text-zinc-800"
+              }`}
+            >
+              LiDAR 360°
+            </button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -796,7 +733,7 @@ export default function MonitoringDashboard({ onHome }) {
           </IconButton>
         </aside>
 
-        {activePanel === "monitoring" && <MonitoringContent />}
+        {activePanel === "monitoring" && <MonitoringContent expandedView={expandedView} />}
         {activePanel === "mission" && <MissionNavigationPage />}
         {activePanel === "assistant" && <AiAssistantPage />}
       </section>
