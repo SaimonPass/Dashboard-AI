@@ -1,47 +1,93 @@
-import React, { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import {
-  ContactShadows,
-  Environment,
-  OrbitControls,
-  RoundedBox,
-} from "@react-three/drei";
-import {
-  Bot,
   BookOpen,
-  Cpu,
-  Gauge,
+  Bot,
+  Briefcase,
   Grid2X2,
-  MapPinned,
+  Mic,
   Navigation,
   Radio,
   Search,
   Settings,
-  UserRound,
+  Wifi,
 } from "lucide-react";
+
+import { Canvas, useFrame } from "@react-three/fiber";
+import { ContactShadows, Environment, OrbitControls } from "@react-three/drei";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as THREE from "three";
 import AiAssistantAnimation from "./AiAssistantAnimation.jsx";
 
-function StatusPill({ text, color = "bg-emerald-500" }) {
+/* ================================
+   TOP BAR
+================================ */
+
+function LiquidTopBar({ activeMode, setActiveMode }) {
+  const modes = [
+    {
+      id: "office",
+      label: "Office Mode",
+      icon: <Wifi className="h-4 w-4" />,
+    },
+    {
+      id: "learning",
+      label: "Learning Mode",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+    {
+      id: "voice",
+      label: "Voice Assistant",
+      icon: <Mic className="h-4 w-4" />,
+    },
+  ];
+
+  const activeIndex = modes.findIndex((mode) => mode.id === activeMode);
+
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/75 px-3 py-1 text-[11px] font-semibold text-zinc-600 shadow-sm">
-      <span
-        className={`h-2 w-2 rounded-full ${color}`}
-        style={{ animation: "pulseDot 1.6s ease-in-out infinite" }}
-      />
-      {text}
+    <div className="real-liquid-glass-bar">
+      <div
+        className="real-liquid-active-wrap"
+        style={{
+          width: "154px",
+          transform: `translateX(${activeIndex * 162 + 6}px)`,
+        }}
+      >
+        <div className="real-liquid-active-main" />
+      </div>
+
+      <div className="real-liquid-buttons">
+        {modes.map((mode) => (
+          <button
+            key={mode.id}
+            type="button"
+            onClick={() => setActiveMode(mode.id)}
+            className={`real-liquid-button ${
+              activeMode === mode.id ? "real-liquid-button-active" : ""
+            }`}
+          >
+            {mode.icon}
+            <span>{mode.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
+/* ================================
+   SHARED BUTTONS
+================================ */
+
 function IconButton({ children, active = false, onClick, title }) {
   return (
     <button
+      type="button"
       title={title}
       onClick={onClick}
-      className={`grid h-11 w-11 place-items-center rounded-full border shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition hover:scale-105 ${
+      className={`grid h-12 w-12 place-items-center rounded-full border transition-all duration-300 hover:scale-105 ${
         active
-          ? "border-zinc-950 bg-zinc-950 text-white"
-          : "border-white/70 bg-white/75 text-zinc-700 hover:bg-white"
+          ? "border-cyan-300/55 bg-cyan-400/20 text-white shadow-[0_0_30px_rgba(0,229,255,0.24)]"
+          : "border-white/15 bg-white/[0.07] text-white/70 hover:border-cyan-300/35 hover:bg-cyan-400/10 hover:text-white"
       }`}
     >
       {children}
@@ -49,537 +95,625 @@ function IconButton({ children, active = false, onClick, title }) {
   );
 }
 
-function ModePill({ icon: Icon, label, active = false }) {
+function HeaderButton({ children, title }) {
   return (
     <button
-      className={`flex items-center gap-2 rounded-full px-7 py-3 text-xs font-bold transition ${
-        active
-          ? "bg-zinc-950 text-white shadow-xl"
-          : "bg-white/10 text-zinc-500 hover:bg-white/20"
-      }`}
+      type="button"
+      title={title}
+      className="grid h-12 w-12 place-items-center rounded-full border border-white/15 bg-white/[0.07] text-white/75 shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-cyan-300/40 hover:bg-cyan-400/10 hover:text-white"
     >
-      <Icon className="h-4 w-4" />
-      {label}
+      {children}
     </button>
   );
 }
 
-function RoverModel() {
-  const roverRef = useRef();
+function SideRail({ activeMode, setActiveMode, onDashboard }) {
+  return (
+    <nav className="fixed left-8 top-1/2 z-[999] flex -translate-y-1/2 flex-col gap-4">
+      <IconButton
+        title="Office Mode"
+        active={activeMode === "office"}
+        onClick={() => setActiveMode("office")}
+      >
+        <Grid2X2 className="h-4 w-4" />
+      </IconButton>
+
+      <IconButton title="AI + LiDAR Dashboard" onClick={onDashboard}>
+        <Radio className="h-4 w-4" />
+      </IconButton>
+
+      <IconButton
+        title="Learning Mode"
+        active={activeMode === "learning"}
+        onClick={() => setActiveMode("learning")}
+      >
+        <Navigation className="h-4 w-4" />
+      </IconButton>
+
+      <IconButton
+        title="Voice Assistant"
+        active={activeMode === "voice"}
+        onClick={() => setActiveMode("voice")}
+      >
+        <Briefcase className="h-4 w-4" />
+      </IconButton>
+    </nav>
+  );
+}
+
+function InfoCard({ title, value, description }) {
+  return (
+    <div className="panel relative overflow-hidden rounded-[28px] p-6">
+      <div className="absolute right-5 top-5 text-white/35">↗</div>
+
+      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/35">
+        {title}
+      </p>
+
+      <h3 className="mt-3 text-4xl font-black tracking-[-0.06em] text-white">
+        {value}
+      </h3>
+
+      <p className="absolute bottom-6 left-6 text-sm font-medium text-white/45">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+/* ================================
+   ROVER MODEL
+================================ */
+
+function RealRoverModel({ onModelLoaded }) {
+  const groupRef = useRef(null);
+  const [modelObject, setModelObject] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+      "/models/rover.gltf",
+      (gltf) => {
+        if (cancelled) return;
+
+        try {
+          const model = gltf.scene.clone(true);
+
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.visible = true;
+              child.castShadow = true;
+              child.receiveShadow = true;
+              child.frustumCulled = false;
+
+              if (child.material) {
+                child.material = child.material.clone();
+                child.material.transparent = false;
+                child.material.opacity = 1;
+                child.material.side = THREE.DoubleSide;
+                child.material.depthWrite = true;
+                child.material.depthTest = true;
+                child.material.needsUpdate = true;
+              }
+            }
+          });
+
+          const box = new THREE.Box3().setFromObject(model);
+          const center = new THREE.Vector3();
+          const size = new THREE.Vector3();
+
+          box.getCenter(center);
+          box.getSize(size);
+
+          const maxAxis = Math.max(size.x, size.y, size.z);
+
+          if (!Number.isFinite(maxAxis) || maxAxis <= 0) {
+            throw new Error("Invalid rover model bounds");
+          }
+
+          model.position.x -= center.x;
+          model.position.y -= center.y;
+          model.position.z -= center.z;
+
+          /*
+            Bigger rover size.
+            This increases visual size without making the camera too close.
+          */
+          const safeScale = 5.15 / maxAxis;
+
+          const wrapper = new THREE.Group();
+          wrapper.add(model);
+          wrapper.scale.setScalar(safeScale);
+          wrapper.position.set(0, 0.02, 0);
+          wrapper.rotation.set(0.04, 0.22, 0);
+
+          console.log("ROVER GLTF LOADED:", {
+            center: center.toArray(),
+            size: size.toArray(),
+            safeScale,
+          });
+
+          setModelObject(wrapper);
+          onModelLoaded?.();
+        } catch (error) {
+          console.error("ROVER PREP FAILED:", error);
+        }
+      },
+      undefined,
+      (error) => {
+        console.error("ROVER GLTF LOAD FAILED:", error);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onModelLoaded]);
 
   useFrame((state) => {
-    const t = state.clock.elapsedTime;
+    if (!groupRef.current) return;
 
-    if (roverRef.current) {
-      roverRef.current.rotation.y = Math.sin(t * 0.35) * 0.12;
-      roverRef.current.position.y = Math.sin(t * 1.2) * 0.025;
-    }
+    groupRef.current.position.y =
+      Math.sin(state.clock.elapsedTime * 1.1) * 0.018;
+
+    groupRef.current.rotation.y += 0.0009;
   });
 
-  const wheels = useMemo(() => {
-    const items = [];
-    const xPositions = [-1.55, -0.55, 0.55, 1.55];
-
-    xPositions.forEach((x) => {
-      items.push([x, -0.72, 0.82]);
-      items.push([x, -0.72, -0.82]);
-    });
-
-    return items;
-  }, []);
+  if (!modelObject) return null;
 
   return (
-    <group ref={roverRef} rotation={[0.12, -0.55, 0]}>
-      {/* Main base body */}
-      <RoundedBox args={[4.2, 0.55, 1.9]} radius={0.18} smoothness={8}>
-        <meshStandardMaterial
-          color="#a8a8a2"
-          roughness={0.35}
-          metalness={0.45}
-        />
-      </RoundedBox>
-
-      {/* Top plate */}
-      <RoundedBox
-        args={[3.7, 0.16, 1.65]}
-        radius={0.12}
-        smoothness={8}
-        position={[0, 0.55, 0]}
-      >
-        <meshStandardMaterial
-          color="#cfd2d1"
-          roughness={0.28}
-          metalness={0.5}
-        />
-      </RoundedBox>
-
-      {/* Middle shelf */}
-      <RoundedBox
-        args={[3.2, 0.12, 1.45]}
-        radius={0.1}
-        smoothness={8}
-        position={[0, 1.25, 0]}
-      >
-        <meshStandardMaterial
-          color="#e4e5e2"
-          roughness={0.32}
-          metalness={0.45}
-        />
-      </RoundedBox>
-
-      {/* Top shelf */}
-      <RoundedBox
-        args={[2.8, 0.12, 1.28]}
-        radius={0.1}
-        smoothness={8}
-        position={[0, 1.93, 0]}
-      >
-        <meshStandardMaterial
-          color="#eeeeeb"
-          roughness={0.3}
-          metalness={0.45}
-        />
-      </RoundedBox>
-
-      {/* Top round sensor */}
-      <mesh position={[0, 2.13, 0]}>
-        <cylinderGeometry args={[0.52, 0.52, 0.2, 64]} />
-        <meshStandardMaterial
-          color="#7b8384"
-          roughness={0.24}
-          metalness={0.65}
-        />
-      </mesh>
-
-      {/* Shelf rods */}
-      {[-1.35, 1.35].map((x) =>
-        [-0.48, 0.48].map((z) => (
-          <mesh key={`${x}-${z}`} position={[x, 1.25, z]}>
-            <cylinderGeometry args={[0.055, 0.055, 1.4, 24]} />
-            <meshStandardMaterial
-              color="#d9dcdb"
-              roughness={0.25}
-              metalness={0.75}
-            />
-          </mesh>
-        ))
-      )}
-
-      {/* Left and right tracks */}
-      <RoundedBox
-        args={[4.55, 0.78, 0.32]}
-        radius={0.18}
-        smoothness={8}
-        position={[0, -0.7, 1.06]}
-      >
-        <meshStandardMaterial color="#101010" roughness={0.42} metalness={0.2} />
-      </RoundedBox>
-
-      <RoundedBox
-        args={[4.55, 0.78, 0.32]}
-        radius={0.18}
-        smoothness={8}
-        position={[0, -0.7, -1.06]}
-      >
-        <meshStandardMaterial color="#101010" roughness={0.42} metalness={0.2} />
-      </RoundedBox>
-
-      {/* Small wheels */}
-      {wheels.map(([x, y, z], index) => (
-        <mesh
-          key={index}
-          position={[x, y, z]}
-          rotation={[Math.PI / 2, 0, 0]}
-        >
-          <cylinderGeometry args={[0.24, 0.24, 0.15, 48]} />
-          <meshStandardMaterial
-            color="#303030"
-            roughness={0.38}
-            metalness={0.4}
-          />
-        </mesh>
-      ))}
-
-      {/* Copper motors */}
-      <mesh position={[-0.9, -0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.22, 0.22, 1.35, 48]} />
-        <meshStandardMaterial
-          color="#d29a74"
-          roughness={0.34}
-          metalness={0.5}
-        />
-      </mesh>
-
-      <mesh position={[0.9, -0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.22, 0.22, 1.35, 48]} />
-        <meshStandardMaterial
-          color="#d29a74"
-          roughness={0.34}
-          metalness={0.5}
-        />
-      </mesh>
-
-      {/* Main axle */}
-      <mesh position={[0, -0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.08, 0.08, 2.8, 48]} />
-        <meshStandardMaterial
-          color="#b8c0d4"
-          roughness={0.25}
-          metalness={0.8}
-        />
-      </mesh>
+    <group ref={groupRef}>
+      <primitive object={modelObject} />
     </group>
   );
 }
 
-function RoverCanvas() {
+function RoverScene({ setRealModelLoaded }) {
   return (
-    <div className="rover-canvas-wrap h-full w-full">
+    <>
+      <ambientLight intensity={3.6} />
+
+      <directionalLight position={[6, 8, 7]} intensity={5.0} castShadow />
+      <directionalLight position={[-6, 5, -5]} intensity={3.0} />
+
+      <pointLight position={[-4, 3, 5]} intensity={2.8} color="#67e8f9" />
+      <pointLight position={[5, -2, 4]} intensity={2.0} color="#8b5cf6" />
+
+      <Suspense fallback={null}>
+        <RealRoverModel onModelLoaded={() => setRealModelLoaded(true)} />
+      </Suspense>
+
+      <Environment preset="city" />
+
+      <ContactShadows
+        position={[0, -1.35, 0]}
+        opacity={0.16}
+        scale={11}
+        blur={4}
+        far={7}
+      />
+
+      <OrbitControls
+        makeDefault
+        enableZoom
+        enablePan={false}
+        enableDamping
+        dampingFactor={0.08}
+        rotateSpeed={0.58}
+        zoomSpeed={0.28}
+        autoRotate
+        autoRotateSpeed={0.07}
+        target={[0, 0, 0]}
+        minDistance={8.6}
+        maxDistance={18}
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI}
+      />
+    </>
+  );
+}
+
+function RoverViewer() {
+  const [, setRealModelLoaded] = useState(false);
+
+  return (
+    <div
+      className="rover-viewer-fixed"
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        minHeight: "560px",
+        overflow: "visible",
+        pointerEvents: "auto",
+        zIndex: 80,
+      }}
+    >
       <Canvas
-        camera={{ position: [4.5, 3.2, 5.6], fov: 38 }}
+        shadows
+        dpr={[1, 2]}
+        camera={{
+          position: [6.1, 3.25, 12.4],
+          fov: 36,
+          near: 0.1,
+          far: 2500,
+        }}
         gl={{
           alpha: true,
           antialias: true,
           powerPreference: "high-performance",
         }}
         style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 2,
           width: "100%",
           height: "100%",
           background: "transparent",
+          display: "block",
         }}
-        onCreated={({ gl, scene }) => {
+        onCreated={({ gl, camera }) => {
           gl.setClearColor(0x000000, 0);
-          scene.background = null;
+          camera.lookAt(0, 0, 0);
         }}
       >
-        <Suspense fallback={null}>
-          <ambientLight intensity={1.2} />
-          <directionalLight position={[5, 6, 6]} intensity={2.4} />
-          <pointLight position={[-4, 3, 5]} intensity={1.6} color="#60a5fa" />
-          <pointLight position={[4, -2, 3]} intensity={1.1} color="#22d3ee" />
-
-          <RoverModel />
-
-          <ContactShadows
-            position={[0, -1.22, 0]}
-            opacity={0.45}
-            scale={7}
-            blur={2.4}
-            far={4}
-          />
-
-          <Environment preset="city" />
-
-          <OrbitControls
-            enableZoom
-            enablePan={false}
-            rotateSpeed={0.75}
-            minDistance={4.2}
-            maxDistance={8.5}
-          />
-        </Suspense>
+        <RoverScene setRealModelLoaded={setRealModelLoaded} />
       </Canvas>
     </div>
   );
 }
 
-function HomeCard({ title, value, sub }) {
+/* ================================
+   POINT CLOUD COMPONENT
+================================ */
+
+function PointCloudMap() {
+  const scanLines = [
+    "M-120 520 C120 390, 410 265, 760 100 C920 25, 1080 0, 1220 -30",
+    "M-150 610 C140 470, 430 340, 805 175 C970 105, 1120 72, 1280 40",
+    "M-100 705 C160 590, 470 455, 870 280 C1030 210, 1160 180, 1320 150",
+    "M60 720 C310 580, 575 455, 910 325 C1060 265, 1210 240, 1390 220",
+    "M-180 455 C110 330, 380 210, 700 70 C880 -5, 1080 -45, 1280 -80",
+    "M220 795 C450 670, 710 520, 1040 385 C1190 320, 1320 295, 1480 278",
+  ];
+
+  const verticals = [
+    [120, 415, 130, "#16ff55"],
+    [205, 360, 170, "#00eaff"],
+    [330, 330, 210, "#6d5cff"],
+    [460, 300, 250, "#1cff61"],
+    [590, 265, 185, "#00eaff"],
+    [710, 230, 260, "#6d5cff"],
+    [845, 205, 300, "#13ff57"],
+    [1010, 250, 190, "#00eaff"],
+    [1150, 210, 230, "#6d5cff"],
+    [1280, 180, 280, "#21ff53"],
+    [760, 535, 160, "#00eaff"],
+    [940, 470, 180, "#16ff55"],
+  ];
+
+  const dots = Array.from({ length: 220 }, (_, i) => {
+    const x = (i * 73) % 1400;
+    const y = 110 + ((i * 47) % 650);
+    const size = i % 11 === 0 ? 3.3 : i % 5 === 0 ? 2.35 : 1.35;
+    const colors = ["#00eaff", "#1dff5a", "#3b82f6", "#8b5cf6"];
+    return [x, y, size, colors[i % colors.length], i];
+  });
+
   return (
-    <div className="panel h-full overflow-hidden rounded-[30px] p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-wide text-zinc-400">
-            {title}
-          </p>
-          <h3 className="mt-2 text-4xl font-black tracking-[-0.06em] text-zinc-950">
-            {value}
-          </h3>
-        </div>
+    <div className="learning-pointcloud-scene">
+      <div className="pc-aurora-bg" />
+      <div className="pc-perspective-grid" />
+      <div className="pc-particle-noise" />
 
-        <span className="text-xl text-zinc-400">↗</span>
-      </div>
+      <svg
+        className="pc-full-svg"
+        viewBox="0 0 1400 760"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <filter id="neonGlow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
 
-      <p className="mt-10 text-xs font-medium text-zinc-400">{sub}</p>
+          <linearGradient id="cyanGreen" x1="0" x2="1">
+            <stop offset="0%" stopColor="#00eaff" />
+            <stop offset="50%" stopColor="#1dff5a" />
+            <stop offset="100%" stopColor="#00eaff" />
+          </linearGradient>
+
+          <linearGradient id="blueViolet" x1="0" x2="1">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="55%" stopColor="#8b5cf6" />
+            <stop offset="100%" stopColor="#00eaff" />
+          </linearGradient>
+        </defs>
+
+        <g className="pc-depth-plane" filter="url(#neonGlow)">
+          <path
+            d="M-80 610 L820 180 L1510 420 L460 840 Z"
+            fill="rgba(0, 238, 255, 0.035)"
+            stroke="rgba(0, 238, 255, 0.15)"
+            strokeWidth="2"
+          />
+
+          {Array.from({ length: 18 }, (_, i) => (
+            <path
+              key={`depth-a-${i}`}
+              d={`M${-80 + i * 70} ${610 - i * 23} L${460 + i * 70} ${
+                840 - i * 23
+              }`}
+              stroke="rgba(34, 211, 238, 0.15)"
+              strokeWidth="1"
+              strokeDasharray="2 14"
+            />
+          ))}
+
+          {Array.from({ length: 14 }, (_, i) => (
+            <path
+              key={`depth-b-${i}`}
+              d={`M${-80 + i * 120} ${610} L${820 + i * 55} ${180}`}
+              stroke="rgba(29, 255, 90, 0.11)"
+              strokeWidth="1"
+              strokeDasharray="2 16"
+            />
+          ))}
+        </g>
+
+        <g className="pc-main-lines" filter="url(#neonGlow)">
+          {scanLines.map((d, i) => (
+            <path
+              key={i}
+              d={d}
+              fill="none"
+              stroke={i % 2 === 0 ? "url(#cyanGreen)" : "url(#blueViolet)"}
+              strokeWidth={i % 2 === 0 ? 8 : 5}
+              strokeLinecap="round"
+              strokeDasharray={i % 2 === 0 ? "10 22" : "16 26"}
+              opacity={i % 2 === 0 ? 0.9 : 0.72}
+            />
+          ))}
+        </g>
+
+        <g className="pc-verticals" filter="url(#neonGlow)">
+          {verticals.map(([x, y, h, color], i) => (
+            <line
+              key={i}
+              x1={x}
+              y1={y}
+              x2={x + 34}
+              y2={y - h}
+              stroke={color}
+              strokeWidth="5"
+              strokeDasharray="5 12"
+              strokeLinecap="round"
+              opacity="0.86"
+            />
+          ))}
+        </g>
+
+        <g className="pc-point-dots" filter="url(#neonGlow)">
+          {dots.map(([x, y, r, color, i]) => (
+            <circle
+              key={i}
+              cx={x}
+              cy={y}
+              r={r}
+              fill={color}
+              opacity={i % 3 === 0 ? 0.95 : 0.58}
+            />
+          ))}
+        </g>
+
+        <g className="pc-sweep-beam" filter="url(#neonGlow)">
+          <path
+            d="M-80 675 L1420 145"
+            stroke="#9dff4f"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray="10 18"
+            opacity="0.65"
+          />
+          <circle cx="210" cy="572" r="8" fill="#00ffa3" />
+          <circle cx="1170" cy="234" r="10" fill="#24ff45" />
+        </g>
+      </svg>
     </div>
   );
 }
 
-function HomeDashboard() {
+/* ================================
+   VOICE ASSISTANT PAGE
+================================ */
+
+function VoiceAssistantPanel() {
   return (
-    <section className="relative z-10 grid h-[calc(100vh-104px)] grid-rows-[minmax(0,1fr)_190px] gap-5 px-20 pb-6">
-      <div className="relative grid min-h-0 grid-cols-[0.85fr_1.5fr_0.85fr] items-center gap-6">
-        <div className="pl-10">
-          <h2 className="text-5xl font-black leading-[0.92] tracking-[-0.07em] text-zinc-950">
-            Office
-            <br />
-            Navigation
-          </h2>
-          <p className="mt-6 max-w-[300px] text-sm leading-relaxed text-zinc-400">
-            Indoor Mapping • Desk-to-Desk Mobility
-            <br />
-            Human-Aware Obstacle Avoidance
-          </p>
-        </div>
-
-        <div className="relative h-full min-h-[420px]">
-          <div className="absolute left-1/2 top-[52%] h-[190px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/12 blur-sm" />
-
-          <div className="absolute inset-0">
-            <RoverCanvas />
-          </div>
-
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-semibold text-zinc-400 shadow-lg backdrop-blur-xl">
-            <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />
-            Click + drag to rotate freely in all axes
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-4xl font-black tracking-[-0.06em] text-zinc-950">
-            SAMP ROBO
-          </h2>
-          <p className="mt-5 max-w-[260px] text-lg leading-relaxed text-zinc-400">
-            Autonomous indoor support for smart office spaces
-          </p>
-        </div>
-      </div>
-
-      <div className="grid min-h-0 grid-cols-3 gap-5">
-        <HomeCard
-          title="Navigation Range"
-          value="25m"
-          sub="Indoor waypoint coverage"
-        />
-        <HomeCard
-          title="Assist Speed"
-          value="1.2 m/s"
-          sub="Safe office movement"
-        />
-        <HomeCard
-          title="Runtime"
-          value="6 hours"
-          sub="Low-power indoor mode"
-        />
-      </div>
-    </section>
-  );
-}
-
-function MissionPreviewPage() {
-  return (
-    <section className="relative z-10 h-[calc(100vh-104px)] px-20 pb-6">
-      <div className="panel h-full overflow-hidden rounded-[30px] p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-zinc-950 text-white shadow-lg">
-              <MapPinned className="h-5 w-5" />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black tracking-[-0.04em] text-zinc-950">
-                Mission & Navigation
-              </h2>
-              <p className="text-xs font-medium text-zinc-400">
-                Route planning, waypoint tracking and autonomous navigation
-              </p>
-            </div>
-          </div>
-
-          <StatusPill color="bg-amber-400" text="AUTONOMY ACTIVE" />
-        </div>
-
-        <div className="grid h-[calc(100%-72px)] grid-cols-[1.2fr_0.8fr] gap-5">
-          <div className="relative overflow-hidden rounded-[26px] border border-white/80 bg-white/65 p-5">
-            <div className="absolute inset-0 opacity-[0.28] [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:44px_44px]" />
-
-            <div className="relative z-10 mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-zinc-950">
-                  Live Route Map
-                </h3>
-                <p className="text-xs text-zinc-400">
-                  Office Zone A → Lab Desk 02
-                </p>
-              </div>
-
-              <div className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white">
-                AUTO MODE
-              </div>
-            </div>
-
-            <div className="relative z-10 h-[calc(100%-70px)] overflow-hidden rounded-[24px] bg-white/10">
-              <svg className="h-full w-full" viewBox="0 0 900 460">
-                <rect
-                  x="80"
-                  y="70"
-                  width="170"
-                  height="80"
-                  rx="18"
-                  fill="rgba(255,255,255,0.18)"
-                />
-                <rect
-                  x="360"
-                  y="95"
-                  width="140"
-                  height="70"
-                  rx="18"
-                  fill="rgba(255,255,255,0.18)"
-                />
-                <rect
-                  x="620"
-                  y="75"
-                  width="180"
-                  height="90"
-                  rx="18"
-                  fill="rgba(255,255,255,0.18)"
-                />
-
-                <rect
-                  x="120"
-                  y="300"
-                  width="190"
-                  height="90"
-                  rx="20"
-                  fill="rgba(255,255,255,0.18)"
-                />
-                <rect
-                  x="430"
-                  y="285"
-                  width="150"
-                  height="80"
-                  rx="18"
-                  fill="rgba(255,255,255,0.18)"
-                />
-                <rect
-                  x="680"
-                  y="290"
-                  width="130"
-                  height="80"
-                  rx="18"
-                  fill="rgba(255,255,255,0.18)"
-                />
-
-                <path
-                  d="M90 380 C180 250, 280 330, 365 210 S570 120, 760 255"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.88)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray="18 18"
-                />
-
-                <circle cx="90" cy="380" r="18" fill="#22c55e" />
-                <circle cx="365" cy="210" r="16" fill="#f59e0b" />
-                <circle cx="760" cy="255" r="18" fill="#ef4444" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="grid grid-rows-2 gap-5">
-            <div className="rounded-[26px] border border-white/80 bg-white/65 p-5">
-              <h3 className="mb-4 text-base font-black text-zinc-950">
-                Navigation Status
-              </h3>
-
-              <div className="space-y-3">
-                <NavMetric label="Current Mode" value="Autonomous" />
-                <NavMetric label="Current Heading" value="72° NE" />
-                <NavMetric label="Distance Left" value="18.5 m" />
-                <NavMetric label="ETA" value="02:14" />
-              </div>
-            </div>
-
-            <div className="rounded-[26px] border border-white/80 bg-white/65 p-5">
-              <h3 className="mb-4 text-base font-black text-zinc-950">
-                Waypoint Queue
-              </h3>
-
-              <div className="space-y-3">
-                <WaypointItem title="WP-01" status="Completed" />
-                <WaypointItem title="WP-02" status="Current" active />
-                <WaypointItem title="WP-03" status="Pending" />
-                <WaypointItem title="Docking Point" status="Pending" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function NavMetric({ label, value }) {
-  return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/70 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-zinc-400">
-        {label}
-      </p>
-      <p className="text-lg font-black tracking-[-0.04em] text-zinc-950">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function WaypointItem({ title, status, active = false }) {
-  return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/70 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span
-          className={`h-3 w-3 rounded-full ${
-            active
-              ? "bg-amber-400"
-              : status === "Completed"
-              ? "bg-emerald-500"
-              : "bg-zinc-300"
-          }`}
-        />
-        <p className="text-sm font-black text-zinc-950">{title}</p>
-      </div>
-
-      <span className="rounded-full bg-zinc-950 px-3 py-1 text-[10px] font-black text-white">
-        {status}
-      </span>
-    </div>
-  );
-}
-
-function AssistantHomePage() {
-  return (
-    <section className="relative z-10 h-[calc(100vh-104px)] px-20 pb-6">
+    <section className="absolute left-[88px] right-[72px] top-[112px] bottom-[34px] z-20">
       <AiAssistantAnimation />
     </section>
   );
 }
 
+/* ================================
+   LEARNING PAGE
+================================ */
+
+function LearningPanel() {
+  return (
+    <section className="learning-edge-page">
+      <PointCloudMap />
+
+      <div className="learning-page-gradient" />
+
+      <div className="learning-top-left">
+        <h2>Learning Mode</h2>
+        <p>Real-time LiDAR point cloud mapping and autonomous navigation.</p>
+      </div>
+
+      <div className="learning-map-title-floating">
+        <h3>Point Cloud Mapping</h3>
+        <p>LiDAR generated 3D indoor navigation map</p>
+      </div>
+
+      <div className="learning-top-status">
+        <span />
+        AUTONOMY ACTIVE
+      </div>
+
+      <div className="learning-map-mode-floating">3D MAP MODE</div>
+
+      <div className="learning-bottom-hud-clean">
+        <div>
+          <span>MODE</span>
+          <strong>Autonomous</strong>
+        </div>
+
+        <div>
+          <span>HEADING</span>
+          <strong>72° NE</strong>
+        </div>
+
+        <div>
+          <span>DISTANCE</span>
+          <strong>18.5 m</strong>
+        </div>
+
+        <div>
+          <span>ETA</span>
+          <strong>02:14</strong>
+        </div>
+
+        <div>
+          <span>POINTS</span>
+          <strong>42k/s</strong>
+        </div>
+
+        <div>
+          <span>STATUS</span>
+          <strong>SLAM Active</strong>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ================================
+   OFFICE HOME
+================================ */
+
+function OfficeHome() {
+  return (
+    <>
+      <section className="absolute left-[98px] top-[42%] z-20 -translate-y-1/2">
+        <h2 className="text-5xl font-black leading-[0.92] tracking-[-0.07em] text-white">
+          Office
+          <br />
+          Navigation
+        </h2>
+
+        <p className="mt-6 max-w-[300px] text-sm leading-6 text-white/48">
+          Indoor Mapping • Desk-to-Desk Mobility
+          <br />
+          Human-Aware Obstacle Avoidance
+        </p>
+      </section>
+
+      <section className="absolute right-[160px] top-[44%] z-20 -translate-y-1/2">
+        <h2 className="text-4xl font-black tracking-[-0.06em] text-white">
+          SAMP ROBO
+        </h2>
+
+        <p className="mt-6 max-w-[260px] text-lg leading-8 text-white/45">
+          Autonomous indoor support for smart office spaces
+        </p>
+      </section>
+
+      <section
+        className="absolute left-1/2 top-[41%] z-30 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: "min(1080px, 66vw)",
+          height: "min(680px, 64vh)",
+          overflow: "visible",
+          pointerEvents: "auto",
+        }}
+      >
+        <RoverViewer />
+      </section>
+
+      <div className="absolute left-1/2 top-[73%] z-40 -translate-x-1/2 rounded-full border border-white/10 bg-white/[0.08] px-5 py-2 text-xs font-bold text-white/60 backdrop-blur-xl">
+        <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+        Drag to rotate • Scroll to zoom
+      </div>
+
+      <section className="absolute bottom-8 left-[88px] right-[72px] z-20 grid h-[160px] grid-cols-3 gap-6">
+        <InfoCard
+          title="Navigation Range"
+          value="25m"
+          description="Indoor waypoint coverage"
+        />
+
+        <InfoCard
+          title="Assist Speed"
+          value="1.2 m/s"
+          description="Safe office movement"
+        />
+
+        <InfoCard
+          title="Runtime"
+          value="6 hours"
+          description="Low-power indoor mode"
+        />
+      </section>
+    </>
+  );
+}
+
+/* ================================
+   MAIN HOMEPAGE
+================================ */
+
 export default function HomePage({ onDashboard }) {
-  const [activePanel, setActivePanel] = useState("home");
+  const [activeMode, setActiveMode] = React.useState("office");
 
   return (
-    <main className="h-screen w-screen overflow-hidden bg-[#eef0ef] text-zinc-950">
+    <main className="relative h-screen w-screen overflow-hidden bg-[#030812] text-white obelisk-theme">
       <section className="clean-grid relative h-screen w-screen overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,255,255,0.86),rgba(255,255,255,0.34)_38%,rgba(0,0,0,0.035)_100%)]" />
+        <div className="obelisk-background pointer-events-none absolute inset-0" />
 
-        <header className="relative z-20 flex h-[104px] items-center justify-between px-8">
+        <header className="absolute left-0 right-0 top-0 z-50 flex h-24 items-center justify-between px-8">
           <div>
-            <h1 className="text-2xl font-black tracking-[0.18em]">SAMP ROBO</h1>
-            <p className="mt-1 text-xs font-semibold text-zinc-400">
+            <h1 className="text-2xl font-black tracking-[0.18em] text-white">
+              SAMP ROBO
+            </h1>
+
+            <p className="mt-1 text-xs font-semibold text-white/45">
               AI Feed • LiDAR Scan • Real-Time Rover Info
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-white/75 bg-white/70 p-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-            <ModePill icon={Radio} label="Office Mode" active />
-            <ModePill icon={BookOpen} label="Learning Mode" />
-            <ModePill icon={Cpu} label="Sample Mode" />
+          <div className="absolute left-1/2 top-7 -translate-x-1/2">
+            <LiquidTopBar
+              activeMode={activeMode}
+              setActiveMode={setActiveMode}
+            />
           </div>
 
           <div className="flex items-center gap-4">
-            <IconButton>
+            <HeaderButton title="Settings">
               <Settings className="h-4 w-4" />
-            </IconButton>
+            </HeaderButton>
 
-            <button className="grid h-12 w-12 place-items-center rounded-full bg-red-400 text-[9px] font-black leading-tight text-white shadow-xl">
+            <button
+              type="button"
+              className="grid h-12 w-12 place-items-center rounded-full border border-cyan-300/25 bg-cyan-400/10 text-[9px] font-black leading-tight text-white shadow-xl"
+            >
               SAMP
               <br />
               ROBO
@@ -587,49 +721,29 @@ export default function HomePage({ onDashboard }) {
           </div>
         </header>
 
-        <aside className="absolute left-8 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-4">
-          <IconButton
-            title="3D Rover Home"
-            active={activePanel === "home"}
-            onClick={() => setActivePanel("home")}
-          >
-            <Grid2X2 className="h-4 w-4" />
-          </IconButton>
+        <SideRail
+          activeMode={activeMode}
+          setActiveMode={setActiveMode}
+          onDashboard={onDashboard}
+        />
 
-          <IconButton title="AI + LiDAR Dashboard" onClick={onDashboard}>
-            <Radio className="h-4 w-4" />
-          </IconButton>
+        {activeMode === "office" && <OfficeHome />}
+        {activeMode === "learning" && <LearningPanel />}
+        {activeMode === "voice" && <VoiceAssistantPanel />}
 
-          <IconButton
-            title="Mission & Navigation"
-            active={activePanel === "mission"}
-            onClick={() => setActivePanel("mission")}
-          >
-            <Navigation className="h-4 w-4" />
-          </IconButton>
+        <button
+          type="button"
+          className="absolute right-8 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/[0.07] text-white/75 backdrop-blur-xl transition-all hover:scale-105 hover:text-white"
+        >
+          <Search className="h-4 w-4" />
+        </button>
 
-          <IconButton
-            title="AI Assistant Core"
-            active={activePanel === "assistant"}
-            onClick={() => setActivePanel("assistant")}
-          >
-            <Bot className="h-4 w-4" />
-          </IconButton>
-        </aside>
-
-        <aside className="absolute right-8 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-4">
-          <IconButton title="Menu">
-            <Search className="h-4 w-4" />
-          </IconButton>
-
-          <IconButton title="User">
-            <UserRound className="h-4 w-4" />
-          </IconButton>
-        </aside>
-
-        {activePanel === "home" && <HomeDashboard />}
-        {activePanel === "mission" && <MissionPreviewPage />}
-        {activePanel === "assistant" && <AssistantHomePage />}
+        <button
+          type="button"
+          className="absolute right-8 top-[calc(50%+64px)] z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/[0.07] text-white/75 backdrop-blur-xl transition-all hover:scale-105 hover:text-white"
+        >
+          <Bot className="h-4 w-4" />
+        </button>
       </section>
     </main>
   );

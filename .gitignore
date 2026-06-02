@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node / React
+node_modules/
+Robo_Dashboard/node_modules/
+dist/
+build/
+
+# VS Code
+.vscode/
+
+# Cache
+.cache/
+*.log

@@ -4,34 +4,45 @@ import MonitoringDashboard from "./MonitoringDashboard.jsx";
 import LoadingScreen from "./LoadingScreen.jsx";
 
 export default function App() {
-  const [page, setPage] = useState("home");
   const [loading, setLoading] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [loadingExit, setLoadingExit] = useState(false);
+
+  const [activeScreen, setActiveScreen] = useState("home");
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setFadeOut(true);
-    }, 4500);
+    const exitTimer = setTimeout(() => {
+      setLoadingExit(true);
+    }, 4200);
 
-    const removeTimer = setTimeout(() => {
+    const finishTimer = setTimeout(() => {
       setLoading(false);
-    }, 5200);
+    }, 5000);
 
     return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
+      clearTimeout(exitTimer);
+      clearTimeout(finishTimer);
     };
   }, []);
 
   return (
     <>
-      {loading && <LoadingScreen fadeOut={fadeOut} />}
+      {loading && <LoadingScreen exit={loadingExit} />}
 
-      <div className={`app-content ${loading ? "app-content-hidden" : "app-content-visible"}`}>
-        {page === "dashboard" ? (
-          <MonitoringDashboard onHome={() => setPage("home")} />
-        ) : (
-          <HomePage onDashboard={() => setPage("dashboard")} />
+      <div
+        className={`app-content ${
+          loading ? "app-content-hidden" : "app-content-visible"
+        }`}
+      >
+        {activeScreen === "home" && (
+          <HomePage
+            onDashboard={() => setActiveScreen("dashboard")}
+          />
+        )}
+
+        {activeScreen === "dashboard" && (
+          <MonitoringDashboard
+            onHome={() => setActiveScreen("home")}
+          />
         )}
       </div>
     </>
