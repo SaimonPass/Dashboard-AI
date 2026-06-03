@@ -442,7 +442,7 @@ function RoverInfoPanel() {
           <TelemetryMetric icon={BatteryCharging} label="Battery" value="74%" badge="Stable" />
           <TelemetryMetric icon={Gauge} label="Speed" value="1.2 m/s" badge="Assist" />
           <TelemetryMetric icon={Cpu} label="CPU Load" value="61%" badge="AI Active" />
-          <TelemetryMetric icon={Thermometer} label="Motor Temp" value="46°C" badge="Normal" />
+          <TelemetryMetric icon={Thermometer} label="Motor RPM" value="3" badge="Idle" />
           <TelemetryMetric icon={Signal} label="Signal" value="92%" badge="Online" />
           <TelemetryMetric icon={Database} label="Storage" value="38GB" badge="Logging" />
         </div>
