@@ -193,7 +193,7 @@ function AiFeedPanel() {
             </p>
 
             <p className="mt-1 text-xs text-white/25">
-              Expected stream: http://localhost:8000/video_feed
+              Expected stream: http://172.30.4.40:5000/video_feed
             </p>
           </div>
         </div>
