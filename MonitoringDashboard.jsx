@@ -20,8 +20,12 @@ import {
 } from "lucide-react";
 import AiAssistantAnimation from "./AiAssistantAnimation.jsx";
 
-const YOLO_STREAM_URL = "http://localhost:8000/video_feed";
-const YOLO_STATS_URL = "http://localhost:8000/stats";
+// TODO: When deploying, change BACKEND_IP to the Jetson Orin Nano's IP address on the WiFi network.
+const BACKEND_IP = "localhost"; 
+const BACKEND_PORT = "5000";
+
+const YOLO_STREAM_URL = `http://${BACKEND_IP}:${BACKEND_PORT}/video_feed`;
+const YOLO_STATS_URL = `http://${BACKEND_IP}:${BACKEND_PORT}/stats`;
 
 const roverStats = [
   {
